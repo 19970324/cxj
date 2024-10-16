@@ -1,0 +1,346 @@
+<!--
+	Nodejs实现匿名聊天群，欢迎开车
+	https://github.com/kylescript/nodejs-chat
+ -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta charset="UTF-8">
+    <title>匿名开车群</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/js-cookie/latest/js.cookie.min.js"></script>
+    <style>
+        body {
+            font-size: 14px;
+        }
+
+        .init {
+            text-align: center;
+        }
+
+        .current-user {
+            text-align: center;
+            margin: 10px;
+        }
+
+        .change-name {
+            color: dodgerblue;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .content {
+            display: none;
+        }
+
+        .chat {
+            margin: 0 8px;
+            background-color: #fcfcfc;
+            border: dimgray 1px solid;
+            border-radius: 5px;
+            height: 400px;
+            overflow: scroll;
+            overflow-x: hidden;
+            overflow-y: visible;
+        }
+
+        .cell-left {
+            margin: 6px 0;
+        }
+
+        .cell-right {
+            margin: 6px 0;
+            text-align: right;
+        }
+
+        .cell-left span {
+            font-size: 12px;
+            color: chocolate;
+            font-style: italic;
+        }
+
+        .cell-right span {
+            color: lime;
+            font-size: 12px;
+            font-style: italic;
+            float: right;
+            margin-right: 5px;
+        }
+
+        .cell-left p {
+            margin: 5px 0 5px 10px;
+            padding: 5px;
+            display: inline-block;
+            color: #101010;
+            background-color: #e6e5ed;
+            border-radius: 8px;
+            max-width: 75%;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+
+        .cell-right p {
+            margin: 5px 10px 5px 0;
+            padding: 5px;
+            display: inline-block;
+            color: #FAFAFA;
+            background-color: #1E8EFE;
+            border-radius: 8px;
+            max-width: 75%;
+            text-align: left;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+
+        .chat-send {
+            margin: 10px 8px;
+        }
+
+        input {
+            display: inline-block;
+            border: #ccc 1px solid;
+            border-radius: 3px;
+            padding: 8px 5px;
+            width: 75%;
+        }
+
+        button {
+            width: 15%;
+            padding: 8px 0;
+            margin-left: 4px;
+            background-color: darkgreen;
+            border-radius: 3px;
+            border: #ccc 1px solid;
+            font-size: 12px;
+            color: white;
+        }
+
+        /* start 初始化动画 start */
+        #loading3 {
+            left: 50%;
+            margin: 20px 0 0 -25px;
+            position: relative;
+            width: 50px;
+            height: 50px;
+        }
+
+        .demo3 {
+            width: 4px;
+            height: 4px;
+            border-radius: 2px;
+            background: black;
+            position: absolute;
+            animation: demo3 linear 0.8s infinite;
+            -webkit-animation: demo3 linear 0.8s infinite;
+        }
+
+        .demo3:nth-child(1) {
+            left: 24px;
+            top: 2px;
+            animation-delay: 0s;
+        }
+
+        .demo3:nth-child(2) {
+            left: 40px;
+            top: 8px;
+            animation-delay: 0.1s;
+        }
+
+        .demo3:nth-child(3) {
+            left: 47px;
+            top: 24px;
+            animation-delay: 0.1s;
+        }
+
+        .demo3:nth-child(4) {
+            left: 40px;
+            top: 40px;
+            animation-delay: 0.2s;
+        }
+
+        .demo3:nth-child(5) {
+            left: 24px;
+            top: 47px;
+            animation-delay: 0.4s;
+        }
+
+        .demo3:nth-child(6) {
+            left: 8px;
+            top: 40px;
+            animation-delay: 0.5s;
+        }
+
+        .demo3:nth-child(7) {
+            left: 2px;
+            top: 24px;
+            animation-delay: 0.6s;
+        }
+
+        .demo3:nth-child(8) {
+            left: 8px;
+            top: 8px;
+            animation-delay: 0.7s;
+        }
+
+        @keyframes demo3 {
+            0%, 40%, 100% {
+                transform: scale(1);
+            }
+            20% {
+                transform: scale(3);
+            }
+        }
+
+        @-webkit-keyframes demo3 {
+            0%, 40%, 100% {
+                transform: scale(1);
+            }
+            20% {
+                transform: scale(3);
+            }
+        }
+
+        /* end 初始化动画 end */
+    </style>
+</head>
+
+<body>
+<div class="init">正在初始化，请稍等...
+    <div id="loading3">
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+        <div class="demo3"></div>
+    </div>
+</div>
+<div class="content">
+    <div class="current-user">当前用户: <a class="user-name">AnyOne</a><a class="change-name"> (换个名字)</a></div>
+    <div class="chat">
+        <!--<div class="cell-left">-->
+        <!--<p><span>黄旭东</span><br>ＭＤ老子是专业解说好吗？这怎么奶死嘛，专业解说看这种局面还看不懂啊？</p>-->
+        <!--</div>-->
+        <!--<div class="cell-right">-->
+        <!--<p><span>鲁迅</span><br>我即使是死了,钉在在棺材里了,也要在墓里,用这腐朽的声带喊出：“我没说过这句话。”</p>-->
+        <!--</div>-->
+    </div>
+    <div class="chat-send">
+        <input class="send-content" type="text" placeholder="请输入内容(回车发送)...">
+        <button class="send-btn">发送</button>
+    </div>
+</div>
+<script>
+    // 我的名字
+    let name = "AnyOne";
+    let cookie_name = 'cookie_name';
+
+    // 定义消息前缀，表示特定的含义
+    const prefix_new_id = '[ID_NEW]';       // 分配名字给新用户
+    const prefix_change_id = '[ID_CHANGE]'; // 老用户换名字
+    const prefix_use_id = '[ID_USE]';       // 老用户用cookie里的老名字
+    const prefix_message_text = '[MESSAGE_TEXT]';   // 文本消息
+    const prefix_message_photo = '[MESSAGE_PHOTO]'; // 图片消息
+    // 文本消息名字、内容分隔符
+    const split_str = "#9527#";
+
+    function create_chat_cell(user_name, message) {
+        function html2Escape(sHtml) {
+            return sHtml.replace(/[<>&"]/g, (c) => {
+                return {'<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;'}[c];
+            });
+        }
+
+        // 暂时去掉吧，让大家玩。
+        // user_name = html2Escape(user_name);
+        // message=html2Escape(message);
+
+        // 自己的消息，放在右侧
+        if (name === user_name) {
+            return '<div class="cell-right"><p><span>' + user_name + '</span><br>' + message + '</p></div>'
+        }
+        return '<div class="cell-left"><p><span>' + user_name + '</span><br>' + message + '</p></div>'
+    }
+
+    // document ready
+    $(() => {
+        let ws = new WebSocket('ws://68.168.141.229:9527');
+        ws.onopen = () => {
+            console.log('client connect server successfully.');
+
+            $('.init').css('display', 'none');
+            $('.content').css('display', 'block');
+
+            let old_name = Cookies.get(cookie_name);
+            if (old_name === undefined) {
+                ws.send(prefix_new_id);
+            } else {
+                ws.send(prefix_use_id + old_name);
+            }
+        };
+
+        // 连接断开了
+        ws.onerror = () => {
+            alert("Σ( ° △ °|||)︴  服务器被二师兄吃掉了!!!");
+            location.reload();
+        };
+
+        ws.onmessage = message => {
+            let m = message.data;
+            console.log('Recv:' + m);
+            if (m.startsWith(prefix_new_id)) {  // 新名字
+                let new_name = m.substring(prefix_new_id.length);
+                Cookies.set(cookie_name, new_name, {expires: 3});
+                $('.user-name').text(new_name);
+                name = new_name;
+            } else if (m.startsWith(prefix_message_text)) {
+                let text = m.substring(prefix_message_text.length);
+                let pos = text.indexOf(split_str);
+                let user_name = text.substring(0, pos);
+                let message = text.substring(pos + split_str.length);
+                console.log(user_name + ":" + message);
+                let cell = create_chat_cell(user_name, message);
+                $('.chat').append(cell);
+
+                // 延迟0.2秒滚动到底部
+                setTimeout(() => {
+                    // 这两种写法都可以，但是貌似第二种更专业一点吧
+                    // $('.chat')[0].scrollTop = $('.chat')[0].scrollHeight;
+                    $('.chat').prop('scrollTop', $('.chat').prop('scrollHeight'));
+                }, 100);
+            }
+        };
+
+        $('.change-name').click(() => {
+            ws.send(prefix_change_id);
+        });
+
+        $('.send-btn').click(() => {
+            let text = $('.send-content').val();
+            if (text === '') {
+                alert("不能发送空白信息!");
+                return;
+            }
+            ws.send(prefix_message_text + text);
+            $('.send-content').val("");
+        });
+    });
+
+    // 响应回车登录事件
+    document.onkeydown = function (e) {
+        if (!e) e = window.event;
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $('.send-btn').click();
+        }
+    };
+
+</script>
+</body>
+
+</html>
